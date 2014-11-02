@@ -1,16 +1,18 @@
 var http = require('http'),
     querystring = require('querystring');
-var writeToConsole = function (msg) { 'use strict'; console.log(msg); };
-function retrieveData(data){ return data; };
+
+function writeToConsole(msg) { 'use strict'; console.log(msg); }
+function retrieveData(data) { 'use strict'; return data; }
+
 var DatasourceFactory = (function () {
     'use strict';
     function Http() {
         this.makeRequest = function (options, onReturn) {
-            var request = require('request'); 
+            var request = require('request');
             request.post({
-              headers: {'content-type' : 'application/x-www-form-urlencoded'},
-              url:     "http://"+ options.hostname + options.path,
-              body:    options.data
+                headers: {'content-type' : 'application/x-www-form-urlencoded'},
+                url:     options.url,
+                body:    options.data
             }, function(error, response, body){
                 if(body)
                     onReturn(eval(body));
@@ -29,10 +31,9 @@ var DatasourceFactory = (function () {
             var httpReq = new Http();
             var data = querystring.stringify({ symbol : symb, callBack : 'retrieveData' });
             httpReq.makeRequest({
-                hostname: this.config.host,
+                url: this.config.url,
                 headers: {'content-type' : 'application/x-www-form-urlencoded', 'Content-Length': data.length},
-                port: 80,
-                path: this.config.path,
+                port: 80, 
                 method: 'POST',
                 data : data,
             }, function (jsonResult) {
@@ -43,8 +44,8 @@ var DatasourceFactory = (function () {
             });
         };
     }
-    var data_src_config = [{ name : 'test', host : 'none', path : '/'},
-                           { name : 'markit', host : "dev.markitondemand.com", path : "/Api/v2/Quote/jsonp"}];
+    var data_src_config = [{ name : 'test', url : 'none'},
+                           { name : 'markit', url : "http://dev.markitondemand.com/Api/v2/Quote/jsonp"}];
     return {
         Datasource_Types : { test : 0, markit : 1 },
         GetDatasource : function (dataSrcType) {
@@ -56,6 +57,3 @@ var DatasourceFactory = (function () {
 module.exports = {
     StockQuotes : DatasourceFactory.GetDatasource(DatasourceFactory.Datasource_Types.markit)
 };
-
-/* module
-            */
