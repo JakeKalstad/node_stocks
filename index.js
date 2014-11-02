@@ -1,48 +1,40 @@
 var http = require('http'),
     querystring = require('querystring');
 var writeToConsole = function (msg) { 'use strict'; console.log(msg); };
-
+function retrieveData(data){ return data; };
 var DatasourceFactory = (function () {
     'use strict';
     function Http() {
         this.makeRequest = function (options, onReturn) {
-            var req = http.request(options, function (res) {
-                writeToConsole('STATUS: ' + res.statusCode);
-                writeToConsole('HEADERS: ' + JSON.stringify(res.headers));
-                res.setEncoding('utf8');
-                res.on('data', function (chunk) {
-                    writeToConsole('BODY: ' + chunk);
-                    onReturn(chunk);
-                });
+            var request = require('request'); 
+            request.post({
+              headers: {'content-type' : 'application/x-www-form-urlencoded'},
+              url:     "http://"+ options.hostname + options.path,
+              body:    options.data
+            }, function(error, response, body){
+                if(body)
+                    onReturn(eval(body));
+                else if(error)
+                    onReturn(error);
+                else onReturn({});
             });
- 
-            req.on('error', function (e) {
-                writeToConsole('problem with request: ' + e.message);
-            });
-                // write data to request body
-            if (options.data) {
-                req.write(querystring.stringify(options.data));                 
-            }
-          
-            req.end();
         };
     }
-    
     function DataSource(config) {
         if (!config) {
             writeToConsole("Missing configuration");
         }
-        this.config = config;
-        writeToConsole("Created a " + this.config.name + " Datasource using the url: " + this.config.host + this.config.path);
+        this.config = config; 
         this.Search = function (symb, callBack) {
             var httpReq = new Http();
+            var data = querystring.stringify({ symbol : symb, callBack : 'retrieveData' });
             httpReq.makeRequest({
                 hostname: this.config.host,
-                headers: {'content-type' : 'application/x-www-form-urlencoded'},
+                headers: {'content-type' : 'application/x-www-form-urlencoded', 'Content-Length': data.length},
                 port: 80,
                 path: this.config.path,
                 method: 'POST',
-                data : { symbol : symb }
+                data : data,
             }, function (jsonResult) {
                 if (!jsonResult || jsonResult.Message) {
                     console.error("Error: ", jsonResult.Message);
@@ -62,7 +54,7 @@ var DatasourceFactory = (function () {
 }());
 
 module.exports = {
-    Factory : DatasourceFactory
+    StockQuotes : DatasourceFactory.GetDatasource(DatasourceFactory.Datasource_Types.markit)
 };
 
 /* module
