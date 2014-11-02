@@ -13,12 +13,13 @@ var DatasourceFactory = (function () {
                 headers: {'content-type' : 'application/x-www-form-urlencoded'},
                 url:     options.url,
                 body:    options.data
-            }, function(error, response, body){
-                if(body)
+            }, function (error, response, body) {
+                if (body) {
+                    // Eval is evil... but i'm baffled at what else to do with the behavior i'm seeing
                     onReturn(eval(body));
-                else if(error)
+                } else if (error) {
                     onReturn(error);
-                else onReturn({});
+                } else { onReturn({}); }
             });
         };
     }
@@ -26,16 +27,16 @@ var DatasourceFactory = (function () {
         if (!config) {
             writeToConsole("Missing configuration");
         }
-        this.config = config; 
+        this.config = config;
         this.Search = function (symb, callBack) {
-            var httpReq = new Http();
-            var data = querystring.stringify({ symbol : symb, callBack : 'retrieveData' });
+            var httpReq = new Http(),
+                data = querystring.stringify({ symbol : symb, callBack : 'retrieveData' });
             httpReq.makeRequest({
                 url: this.config.url,
                 headers: {'content-type' : 'application/x-www-form-urlencoded', 'Content-Length': data.length},
-                port: 80, 
+                port: 80,
                 method: 'POST',
-                data : data,
+                data : data
             }, function (jsonResult) {
                 if (!jsonResult || jsonResult.Message) {
                     console.error("Error: ", jsonResult.Message);
